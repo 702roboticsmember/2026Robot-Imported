@@ -1,0 +1,397 @@
+package frc.robot.subsystems;
+
+import frc.robot.SwerveModule;
+import frc.robot.Constants;
+import frc.robot.RobotContainer;
+import org.wpilib.math.kinematics.ChassisVelocities;
+import org.wpilib.math.kinematics.SwerveDriveKinematics;
+import org.wpilib.math.kinematics.SwerveDriveOdometry;
+import org.wpilib.math.kinematics.SwerveModulePosition;
+import org.wpilib.math.kinematics.SwerveModuleVelocity;
+
+import java.io.IOException;
+
+import org.json.simple.parser.ParseException;
+
+import com.ctre.phoenix6.hardware.Pigeon2;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.RobotConfig;
+
+import org.wpilib.math.linalg.VecBuilder;
+import org.wpilib.math.estimator.PoseEstimator;
+import org.wpilib.math.estimator.SwerveDrivePoseEstimator;
+import org.wpilib.math.geometry.Pose2d;
+import org.wpilib.math.geometry.Rotation2d;
+import org.wpilib.math.geometry.Translation2d;
+import org.wpilib.driverstation.DriverStation;
+import org.wpilib.system.Timer;
+import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.command2.SubsystemBase;
+
+/**
+ * Our main drive subsystem
+ */
+public class Swerve extends SubsystemBase {
+    
+    public SwerveModule[] swerveModules;
+    public static Pigeon2 gyro;
+    public  RobotConfig config;
+     public TurretSubsystem t_TurretSubsystem;
+    
+    public static SwerveDrivePoseEstimator swervePoseEstimator;
+    
+
+
+    public Swerve(TurretSubsystem t_TurretSubsystem) {
+        this.t_TurretSubsystem = t_TurretSubsystem;
+      
+        //limelightMeasurement =  LimelightHelpersCameronEdition.getBotPoseEstimate_wpiBlue(Constants.limelightConstants.limelightBack);
+        gyro = new Pigeon2(Constants.Swerve.GyroId, Constants.CAN_BUS);
+        gyro.reset();
+        try {
+            config = RobotConfig.fromGUISettings();
+        } catch (IOException | ParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        swerveModules = new SwerveModule[] {
+                new SwerveModule(0, Constants.Swerve.Mod0.constants),
+                new SwerveModule(1, Constants.Swerve.Mod1.constants),
+                new SwerveModule(2, Constants.Swerve.Mod2.constants),
+                new SwerveModule(3, Constants.Swerve.Mod3.constants)
+        };
+
+        
+        if(gyro.isConnected()){
+            swervePoseEstimator = new SwerveDrivePoseEstimator(Constants.Swerve.KINEMATICS, getGyroYaw(), getModulePositions(), new Pose2d());
+        }else{
+            swervePoseEstimator = new SwerveDrivePoseEstimator(Constants.Swerve.KINEMATICS, new Rotation2d(Math.toRadians(0)), getModulePositions(), new Pose2d());
+        }
+        
+        AutoBuilder.configure(
+            this::getPose, // Robot pose supplier
+            this::setPose, // Method to reset odometry (will be called if your auto has a starting pose)
+            this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+            Constants.Swerve.PATHPLANNER_FOLLOWER_CONFIG,
+            config,
+                () -> {
+                    // Boolean supplier that controls when the path will be mirrored for the red alliance
+                    // This will flip the path being followed to the red side of the field.
+                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+      
+                    var alliance = DriverStation.getAlliance();
+                    if (alliance.isPresent()) {
+                        if(alliance.get() == DriverStation.Alliance.Red){
+                            RobotContainer.BLUE_ALLIANCE = false;
+                            }else{
+                                RobotContainer.BLUE_ALLIANCE = true;
+                            }
+                      return alliance.get() == DriverStation.Alliance.Red;
+                    }
+                    return false;
+                  },
+                  this // Reference to this subsystem to set requirements
+          );
+    }
+
+    private void driveRobotRelative(ChassisVelocities speeds) {
+        var SwerveModuleVelocitys = Constants.Swerve.KINEMATICS.toSwerveModuleVelocities(speeds);
+        SwerveDriveKinematics.desaturateWheelVelocities(
+                SwerveModuleVelocitys, Constants.Swerve.MAX_SPEED);
+
+        for (int i = 0; i < SwerveModuleVelocitys.length; i++) {
+            swerveModules[i].setDesiredState(SwerveModuleVelocitys[i], Constants.Swerve.isOpenLoop);
+        }
+    }
+
+    private ChassisVelocities getRobotRelativeSpeeds() {
+        return Constants.Swerve.KINEMATICS.toChassisSpeeds(getModuleStates());
+    }
+
+    private void resetPose(Pose2d startingPosition) {
+        SmartDashboard.putNumber("xi", startingPosition.getX());
+        SmartDashboard.putNumber("yi", startingPosition.getY());
+        SmartDashboard.putNumber("ai", startingPosition.getRotation().getDegrees());
+        swervePoseEstimator.resetPosition(
+                new Rotation2d(Math.toRadians(gyro.getYaw().getValueAsDouble())),
+                this.getModulePositions(),
+                startingPosition);
+                
+    }
+
+    public void drive(Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop) {
+        SwerveModuleVelocity[] SwerveModuleVelocitys = 
+                // fieldRelative ? ChassisVelocities.fromFieldRelativeVelocities
+                // (
+                //         translation.getX(),
+                //         translation.getY(),
+                //         rotation,
+                //         getHeading())
+                //         : new ChassisVelocities(
+                //                 translation.getX(),
+                //                 translation.getY(),
+                //                 rotation));
+                new ChassisVelocities(translation.getX(), translation.getY(), rotation, getHeading());
+        SwerveDriveKinematics.desaturateWheelVelocities(SwerveModuleVelocitys, Constants.Swerve.MAX_SPEED);
+
+        for (SwerveModule mod : swerveModules) {
+            mod.setDesiredState(SwerveModuleVelocitys[mod.moduleNumber], isOpenLoop);
+        }
+    }
+
+    public void driveAdjustedHeading(Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop, Rotation2d TurretOffset) {
+        SwerveModuleVelocity[] SwerveModuleVelocitys = Constants.Swerve.KINEMATICS.toSwerveModuleVelocitys(
+                fieldRelative ? ChassisVelocities.fromFieldRelativeVelocities(
+                        translation.getX(),
+                        translation.getY(),
+                        rotation,
+                        getHeading().plus(TurretOffset))
+                        : new ChassisVelocities(
+                                translation.getX(),
+                                translation.getY(),
+                                rotation));
+        SwerveDriveKinematics.desaturateWheelVelocities(SwerveModuleVelocitys, Constants.Swerve.MAX_SPEED);
+
+        for (SwerveModule mod : swerveModules) {
+            mod.setDesiredState(SwerveModuleVelocitys[mod.moduleNumber], isOpenLoop);
+        }
+    }
+
+    /* Used by SwerveControllerCommand in Auto */
+    public void setModuleStates(SwerveModuleVelocity[] desiredStates, boolean isOpenLoop) {
+        SwerveDriveKinematics.desaturateWheelVelocities(desiredStates, Constants.Swerve.MAX_SPEED);
+
+        for (SwerveModule mod : swerveModules) {
+            mod.setDesiredState(desiredStates[mod.moduleNumber], isOpenLoop);
+        }
+    }
+
+    public SwerveModuleVelocity[] getModuleStates() {
+        SwerveModuleVelocity[] states = new SwerveModuleVelocity[4];
+        for (SwerveModule mod : swerveModules) {
+            states[mod.moduleNumber] = mod.getState();
+        }
+        return states;
+    }
+
+    public SwerveModulePosition[] getModulePositions() {
+        SwerveModulePosition[] positions = new SwerveModulePosition[4];
+        for (SwerveModule mod : swerveModules) {
+            positions[mod.moduleNumber] = mod.getPosition();
+        }
+        return positions;
+    }
+
+    public Pose2d getPose() {
+        return swervePoseEstimator.getEstimatedPosition();
+    }
+
+    public void setPose(Pose2d pose) {
+        swervePoseEstimator.resetPosition(getGyroYaw(), getModulePositions(), pose);
+    }
+
+    public Rotation2d getHeading() {
+        return getPose().getRotation();
+    }
+
+    public void setHeading(Rotation2d heading) {
+        swervePoseEstimator.resetPosition(getGyroYaw(), getModulePositions(),
+                new Pose2d(getPose().getTranslation(), heading));
+    }
+
+    public void zeroHeading() {
+        swervePoseEstimator.resetPosition(getGyroYaw(), getModulePositions(),
+                new Pose2d(getPose().getTranslation(), new Rotation2d()));
+    }
+
+    public Rotation2d getGyroYaw() {
+       
+        return (Constants.Swerve.INVERT_GYRO) ? Rotation2d.fromDegrees(360 - gyro.getYaw().getValueAsDouble())
+                : Rotation2d.fromDegrees(gyro.getYaw().getValueAsDouble());
+    }
+
+    // public double getAcc() {
+    //     return gyro.getAccelFullScaleRangeG();
+    // }
+
+    public void resetModulesToAbsolute() {
+        for (SwerveModule mod : swerveModules) {
+            mod.resetToAbsolute();
+        }
+    }
+
+
+    // public double getGyroVelX(){
+    //     return gyro.getAccel;
+    // }
+    // public double getGyroVelY(){
+    //     return gyro.getRobotCentricVelocityY();
+    // }
+    // public double getGyroVelZ(){
+    //     return gyro.getRobotCentricVelocityZ();
+    // }
+
+    public Pose2d limelightTurretPoseAdjustedToRobot(Pose2d pose){
+        //Pose2d pose2 = null;
+        double y = Constants.Swerve.LIMELIGHT_TURRET_POSE_Y;
+        double x =  -Constants.Swerve.LIMELIGHT_TURRET_POSE_X;
+        Rotation2d a = pose.getRotation().minus(new Rotation2d(Math.toRadians(Constants.TurretConstants.angle)));
+        
+       Pose2d returnpose = new Pose2d(pose.getX() + (a.getCos()* x) - (a.getSin() * y ), pose.getY() + (a.getCos()* y) - (a.getSin() * x ), a);
+       SmartDashboard.putNumber("ogPosex", pose.getX());
+           SmartDashboard.putNumber("ogPosey", pose.getY());
+           SmartDashboard.putNumber("ogheading", pose.getRotation().getDegrees());
+       SmartDashboard.putNumber("adjPosex", returnpose.getX());
+           SmartDashboard.putNumber("adjPosey", returnpose.getY());
+           SmartDashboard.putNumber("adjheading", a.getDegrees());
+           return returnpose;
+        // return new Pose2d(pose.getX(), pose.getY(), swervePoseEstimator.getEstimatedPosition().getRotation());
+    }
+
+   public  Pose2d RobotPoseAdjustedTolimelightTurret(Pose2d pose){
+        double y = -Constants.Swerve.LIMELIGHT_TURRET_POSE_Y;
+        double x =  Constants.Swerve.LIMELIGHT_TURRET_POSE_X;
+        Rotation2d a = pose.getRotation();
+        Rotation2d t = this.t_TurretSubsystem.getAngle();
+        Pose2d returnpose = new Pose2d(pose.getX() + (a.getCos()* x) - (a.getSin() * y ), pose.getY() + (a.getCos()* y) - (a.getSin() * x ),  a.plus(t));
+        SmartDashboard.putNumber("2adjPosex", returnpose.getX());
+           SmartDashboard.putNumber("2adjPosey", returnpose.getY());
+           SmartDashboard.putNumber("2adjheading", a.getDegrees());
+       return returnpose;
+
+        // return new Pose2d(pose.getX(), pose.getY(), swervePoseEstimator.getEstimatedPosition().getRotation());
+    }
+   
+
+    // public void setHeadingToField(){
+    //     Rotation2d rotate = LimelightHelpersCameronEdition.getBotPoseEstimate_wpiBlue(Constants.limelightConstants.limelightTurret).pose.getRotation();
+    //     if (this.limelightMeasurement != null){
+    //     setHeading(rotate);
+    //     }
+    // }
+    // public void setposetoField(){
+        
+    //     if (this.limelightMeasurement != null){
+    //     setPose(limelightMeasurement.pose);
+    //     }
+    // }
+
+public void addmt1VisionMeasurement(LimelightHelpersCameronEdition.PoseEstimate mt1){
+        boolean doRejectUpdate = false;
+        if (mt1 != null){
+         if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
+      {
+        if(mt1.rawFiducials[0].ambiguity > .7)
+        {
+          doRejectUpdate = true;
+        }
+        if(mt1.rawFiducials[0].distToCamera > 1.5)
+        {
+          doRejectUpdate = true;
+        }
+      }
+      if(mt1.tagCount == 0)
+      {
+        doRejectUpdate = true;
+      }
+      if(mt1.avgTagDist > 5.8)
+      {
+        doRejectUpdate = true;
+      }
+      if(Double.isNaN(mt1.std[0]) || Double.isNaN(mt1.std[1]) || Double.isNaN(mt1.std[2])){
+            mt1.std[0] = .05;
+            mt1.std[1] =.05;
+            mt1.std[2] = .1;
+        }
+
+      if(!doRejectUpdate)
+      {
+        
+        swervePoseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(mt1.std[0] * 5,mt1.std[1] * 5, mt1.std[2]/5));
+        swervePoseEstimator.addVisionMeasurement(
+            mt1.pose,
+            mt1.timestampSeconds);
+            SmartDashboard.putBoolean("ran", true);
+            SmartDashboard.putNumberArray("std", mt1.std);
+             SmartDashboard.putNumber("dist",  mt1.avgTagDist);
+      }
+        }
+    }
+
+    public void addmt2VisionMeasurement(LimelightHelpersCameronEdition.PoseEstimate mt2){
+      boolean doRejectUpdate = false; 
+ 
+   
+  // if our angular velocity is greater than 360 degrees per second, ignore vision updates
+//   if(Math.abs(gyro.) > 360)
+//   {
+//     doRejectUpdate = true;
+//   }
+  if(mt2.tagCount == 0)
+  {
+    doRejectUpdate = true;
+  }
+  if(!doRejectUpdate)
+  {
+    swervePoseEstimator.setVisionMeasurementStdDevs(VecBuilder.fill(mt2.std[0], mt2.std[1], mt2.std[2]));
+    swervePoseEstimator.addVisionMeasurement(
+        mt2.pose,
+        mt2.timestampSeconds);
+  }
+    
+    }
+
+
+
+    @Override
+    public void periodic() {
+         LimelightHelpersCameronEdition.SetRobotOrientation(Constants.limelightConstants.limelightTurret, this.RobotPoseAdjustedTolimelightTurret(swervePoseEstimator.getEstimatedPosition()).getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        if(Double.isNaN(swervePoseEstimator.getEstimatedPosition().getX())){
+            swervePoseEstimator = new SwerveDrivePoseEstimator(Constants.Swerve.KINEMATICS, getGyroYaw(), getModulePositions(), new Pose2d());
+        }
+        limelightMeasurement =  LimelightHelpersCameronEdition.getBotPoseEstimate_wpiBlue(Constants.limelightConstants.limelightBack);
+        limelightMeasurementTurret =  LimelightHelpersCameronEdition.getBotPoseEstimate_wpiBlue(Constants.limelightConstants.limelightTurret);
+        //if(gyro.isConnected())swervePoseEstimator.updateWithTime(Timer.getFPGATimestamp(), getGyroYaw(), getModulePositions());
+        swervePoseEstimator.updateWithTime(Timer.getMonotonicTimestamp(), getGyroYaw(), getModulePositions());
+       
+
+
+
+        SmartDashboard.putNumber("gyro", getHeading().getDegrees() );
+        
+        
+        //SmartDashboard.putNumber("Acc",this.getAcc());
+        for (SwerveModule mod : swerveModules) {
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " CANcoder", mod.getCANcoder().getDegrees());
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Angle", mod.getPosition().angle.getDegrees());
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
+        }
+
+        if (this.limelightMeasurementTurret != null){
+            if(limelightMeasurementTurret.pose != null && limelightMeasurementTurret.pose.getRotation() != null){
+              Pose2d pose = limelightTurretPoseAdjustedToRobot(limelightMeasurementTurret.pose);
+              
+              limelightMeasurementTurret.pose = pose;
+             addmt1VisionMeasurement(limelightMeasurementTurret); 
+              
+            }
+           }
+           ChassisVelocities speed = getRobotRelativeSpeeds();
+           Constants.Swerve.speeds = speed;
+        SmartDashboard.putNumber("chassisx", speed.vxMetersPerSecond);
+        SmartDashboard.putNumber("chassisy", speed.vyMetersPerSecond);
+        if (this.limelightMeasurement != null){   
+            addmt1VisionMeasurement(limelightMeasurement); 
+        }
+    // Constants.Swerve.Robotpose = swervePoseEstimator.getEstimatedPosition();
+    // Constants.TurretConstants.turretPose2d = RobotPoseAdjustedTolimelightTurret(swervePoseEstimator.getEstimatedPosition());
+    
+ 
+} 
+    
+   
+}
+    
+
