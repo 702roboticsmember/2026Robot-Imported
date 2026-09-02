@@ -4,9 +4,6 @@
 
 package frc.robot.commands;
 
-import java.util.function.BooleanSupplier;
-import java.util.function.DoubleSupplier;
-import org.wpilib.math.util.MathUtil;
 import org.wpilib.math.controller.PIDController;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
@@ -15,6 +12,7 @@ import org.wpilib.command2.Command;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.LimelightSubsystem;
+// import frc.robot.subsystems.LimelightSubsystem;
 //import frc.robot.subsystems.LimelightSubsystemRight;
 import frc.robot.subsystems.Swerve;
 
@@ -30,11 +28,6 @@ public class AlignCommand extends Command {
  
   
   
-  DoubleSupplier TX;
-  DoubleSupplier TZ;
-  DoubleSupplier RY;
-  BooleanSupplier tv;
-  DoubleSupplier tx;
   Swerve s_Swerve;
   LimelightSubsystem l_LimelightSubsystem;
   Rotation2d headingprev;
@@ -48,11 +41,6 @@ public class AlignCommand extends Command {
   public AlignCommand(double x, double z, double ry, LimelightSubsystem l_LimelightSubsystem, Swerve s_Swerve) {
     
     this.l_LimelightSubsystem = l_LimelightSubsystem;
-    this.TX = ()-> l_LimelightSubsystem.getTargetPos(0);
-    this.TZ = ()-> l_LimelightSubsystem.getTargetPos(2);
-    this.RY = ()-> l_LimelightSubsystem.getTargetPos(4);
-    this.tv = ()-> l_LimelightSubsystem.IsTargetAvailable();
-    this.tx = ()-> l_LimelightSubsystem.getTargetX();
     this.s_Swerve = s_Swerve;
 
 
@@ -78,8 +66,8 @@ public class AlignCommand extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double Tx =  l_LimelightSubsystem.getCameraPos(0);
-    double Tz =  l_LimelightSubsystem.getCameraPos(2);
+    double Tx =  l_LimelightSubsystem.getCameraPoseTargetSpace().getX();
+    double Tz =  l_LimelightSubsystem.getCameraPoseTargetSpace().getY();
     double distance = new Translation2d(Tx, Tz).getDistance(new Translation2d(x, z));
     // boolean inzone = Math.abs(Tx) < 0.3;
     
@@ -92,7 +80,7 @@ public class AlignCommand extends Command {
     
 
     
-    boolean Target =  l_LimelightSubsystem.IsTargetAvailable();
+    boolean Target =  l_LimelightSubsystem.isTargetAvailable();
     // double value = TranslatePID.calculate(Tx);
     // double result = Math.copySign(Math.abs(value) + 0.01, value); 
     // double Tranlate = (Target && !TranslatePID.atSetpoint()  ? MathUtil.clamp(value, -0.47, 0.47) : 0);
@@ -108,7 +96,7 @@ public class AlignCommand extends Command {
     //Cameron Trux Team 702 :3
     //double angle = Math.tanh(x/z);
 
-    double a =  l_LimelightSubsystem.getTargetPos(4);
+    double a =  l_LimelightSubsystem.getTXDegrees();
     // double tx = l_LimelightSubsystem.getTargetX();
     double value2 =  RotatePID.calculate(a);
     //double result2 = Math.copySign(Math.abs(value2) + 0.0955, value2); 

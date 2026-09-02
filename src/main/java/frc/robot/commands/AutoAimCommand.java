@@ -21,6 +21,7 @@ import org.wpilib.command2.Command;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.HoodSubsystem;
+import frc.robot.subsystems.LimelightSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.TurretSubsystem;
@@ -31,6 +32,7 @@ public class AutoAimCommand extends Command {
   private TurretSubsystem t_TurretSubsystem ;
   private HoodSubsystem h_HoodSubsystem;
   private ShooterSubsystem s_ShooterSubsystem;
+  private LimelightSubsystem limelightSubsystem;
   
 
   private double g = Constants.PhysicsConstants.gravity;
@@ -51,10 +53,11 @@ public class AutoAimCommand extends Command {
 
   
   /** Creates a new AutoAimCommand. */
-  public AutoAimCommand(Translation2d poi, TurretSubsystem t_TurretSubsystem, HoodSubsystem h_HoodSubsystem, ShooterSubsystem s_ShooterSubsystem, BooleanSupplier BlueAlliance) {
+  public AutoAimCommand(Translation2d poi, TurretSubsystem t_TurretSubsystem, HoodSubsystem h_HoodSubsystem, ShooterSubsystem s_ShooterSubsystem, BooleanSupplier BlueAlliance, LimelightSubsystem limelightSubsystem) {
     this.t_TurretSubsystem = t_TurretSubsystem;
     this.s_ShooterSubsystem = s_ShooterSubsystem;
     this.h_HoodSubsystem = h_HoodSubsystem;
+    this.limelightSubsystem = limelightSubsystem;
     addRequirements(t_TurretSubsystem, h_HoodSubsystem, s_ShooterSubsystem);
     this.poi = poi;
     this.isFixed = true;
@@ -407,5 +410,6 @@ public class AutoAimCommand extends Command {
 
   public double getIMUYaw(){
     // return LimelightHelpersCameronEdition.getIMUData("limelight").gyroY;
+    return limelightSubsystem.getIMUYaw();
   }
 }
