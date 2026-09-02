@@ -10,6 +10,7 @@ import org.wpilib.math.kinematics.SwerveModulePosition;
 import org.wpilib.math.kinematics.SwerveModuleVelocity;
 
 import java.io.IOException;
+import java.util.Optional;
 
 import org.json.simple.parser.ParseException;
 
@@ -25,6 +26,8 @@ import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.math.geometry.Translation2d;
 import org.wpilib.driverstation.DriverStation;
+import org.wpilib.driverstation.internal.DriverStationBackend;
+import org.wpilib.driverstation.Alliance;
 import org.wpilib.system.Timer;
 import org.wpilib.smartdashboard.SmartDashboard;
 import org.wpilib.command2.SubsystemBase;
@@ -81,15 +84,15 @@ public class Swerve extends SubsystemBase {
                     // Boolean supplier that controls when the path will be mirrored for the red alliance
                     // This will flip the path being followed to the red side of the field.
                     // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-      
-                    var alliance = DriverStation.getAlliance();
-                    if (((Object) alliance).isPresent()) {
-                        if(((Timer) alliance).get() == DriverStation.Alliance.Red){
+                        
+                    Optional<Alliance> alliance = DriverStationBackend.getAlliance();
+                    if ((alliance).isPresent()) {
+                        if((alliance).get() == Alliance.RED){
                             RobotContainer.BLUE_ALLIANCE = false;
                             }else{
                                 RobotContainer.BLUE_ALLIANCE = true;
                             }
-                      return ((Timer) alliance).get() == DriverStation.Alliance.Red;
+                      return (alliance).get() == Alliance.RED;
                     }
                     return false;
                   },
@@ -123,18 +126,16 @@ public class Swerve extends SubsystemBase {
     }
 
     public void drive(Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop) {
-        
-        SwerveModuleVelocity[] SwerveModuleVelocitys = 
-                Constants.Swerve.KINEMATICS.toSwerveModuleVelocitys(
-                fieldRelative ? new ChassisVelocities(
-                    translation.getX(),
-                    translation.getY(),
-                    rotation)
-                    : new ChassisVelocities(
+        ChassisVelocities chassisVelocities = new ChassisVelocities(
                         translation.getX(),
                         translation.getY(),
-                        rotation));
-                new ChassisVelocities(translation.getX(), translation.getY(), rotation);
+                        rotation);
+        
+        if(fieldRelative) {
+            chassisVelocities = chassisVelocities.toFieldRelative(getHeading());
+        }
+        SwerveModuleVelocity[] SwerveModuleVelocitys = 
+                Constants.Swerve.KINEMATICS.toSwerveModuleVelocities(chassisVelocities);
                 
         SwerveDriveKinematics.desaturateWheelVelocities(SwerveModuleVelocitys, Constants.Swerve.MAX_SPEED);
 
@@ -144,16 +145,17 @@ public class Swerve extends SubsystemBase {
     }
 
     public void driveAdjustedHeading(Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop, Rotation2d TurretOffset) {
-        SwerveModuleVelocity[] SwerveModuleVelocitys = Constants.Swerve.KINEMATICS.toSwerveModuleVelocitys(
-                fieldRelative ? ChassisVelocities.fromFieldRelativeVelocities(
+        ChassisVelocities chassisVelocities = new ChassisVelocities(
                         translation.getX(),
                         translation.getY(),
-                        rotation,
-                        getHeading().plus(TurretOffset))
-                        : new ChassisVelocities(
-                                translation.getX(),
-                                translation.getY(),
-                                rotation));
+                        rotation);
+        
+        if(fieldRelative) {
+            chassisVelocities = chassisVelocities.toFieldRelative(getHeading().plus(TurretOffset));
+        }
+        SwerveModuleVelocity[] SwerveModuleVelocitys = 
+                Constants.Swerve.KINEMATICS.toSwerveModuleVelocities(chassisVelocities);
+                
         SwerveDriveKinematics.desaturateWheelVelocities(SwerveModuleVelocitys, Constants.Swerve.MAX_SPEED);
 
         for (SwerveModule mod : swerveModules) {
