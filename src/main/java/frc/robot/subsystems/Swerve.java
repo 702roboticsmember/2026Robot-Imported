@@ -16,6 +16,7 @@ import org.json.simple.parser.ParseException;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 
 import org.wpilib.math.linalg.VecBuilder;
 import org.wpilib.math.estimator.PoseEstimator;
@@ -61,7 +62,7 @@ public class Swerve extends SubsystemBase {
                 new SwerveModule(2, Constants.Swerve.Mod2.constants),
                 new SwerveModule(3, Constants.Swerve.Mod3.constants)
         };
-
+    
         
         if(gyro.isConnected()){
             swervePoseEstimator = new SwerveDrivePoseEstimator(Constants.Swerve.KINEMATICS, getGyroYaw(), getModulePositions(), new Pose2d());
@@ -82,13 +83,13 @@ public class Swerve extends SubsystemBase {
                     // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
       
                     var alliance = DriverStation.getAlliance();
-                    if (alliance.isPresent()) {
-                        if(alliance.get() == DriverStation.Alliance.Red){
+                    if (((Object) alliance).isPresent()) {
+                        if(((Timer) alliance).get() == DriverStation.Alliance.Red){
                             RobotContainer.BLUE_ALLIANCE = false;
                             }else{
                                 RobotContainer.BLUE_ALLIANCE = true;
                             }
-                      return alliance.get() == DriverStation.Alliance.Red;
+                      return ((Timer) alliance).get() == DriverStation.Alliance.Red;
                     }
                     return false;
                   },
@@ -107,7 +108,7 @@ public class Swerve extends SubsystemBase {
     }
 
     private ChassisVelocities getRobotRelativeSpeeds() {
-        return Constants.Swerve.KINEMATICS.toChassisSpeeds(getModuleStates());
+        return Constants.Swerve.KINEMATICS.toChassisVelocities(getModuleStates());
     }
 
     private void resetPose(Pose2d startingPosition) {
@@ -122,18 +123,19 @@ public class Swerve extends SubsystemBase {
     }
 
     public void drive(Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop) {
+        
         SwerveModuleVelocity[] SwerveModuleVelocitys = 
-                // fieldRelative ? ChassisVelocities.fromFieldRelativeVelocities
-                // (
-                //         translation.getX(),
-                //         translation.getY(),
-                //         rotation,
-                //         getHeading())
-                //         : new ChassisVelocities(
-                //                 translation.getX(),
-                //                 translation.getY(),
-                //                 rotation));
-                new ChassisVelocities(translation.getX(), translation.getY(), rotation, getHeading());
+                Constants.Swerve.KINEMATICS.toSwerveModuleVelocitys(
+                fieldRelative ? new ChassisVelocities(
+                    translation.getX(),
+                    translation.getY(),
+                    rotation)
+                    : new ChassisVelocities(
+                        translation.getX(),
+                        translation.getY(),
+                        rotation));
+                new ChassisVelocities(translation.getX(), translation.getY(), rotation);
+                
         SwerveDriveKinematics.desaturateWheelVelocities(SwerveModuleVelocitys, Constants.Swerve.MAX_SPEED);
 
         for (SwerveModule mod : swerveModules) {
@@ -366,7 +368,7 @@ public void addmt1VisionMeasurement(LimelightHelpersCameronEdition.PoseEstimate 
         for (SwerveModule mod : swerveModules) {
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " CANcoder", mod.getCANcoder().getDegrees());
             SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Angle", mod.getPosition().angle.getDegrees());
-            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().speedMetersPerSecond);
+            SmartDashboard.putNumber("Mod " + mod.moduleNumber + " Velocity", mod.getState().velocity);
         }
 
         if (this.limelightMeasurementTurret != null){
