@@ -29,17 +29,20 @@ public class LimelightSubsystem extends SubsystemBase {
   public FiducialTarget[] getTargets() {
     return getResults().fiducialTargets;
   }
+  public FiducialTarget getTarget() {
+    return getTargets()[0];
+  }
   public Pose2d getTargetPoseCameraSpace() {
-    var targets = getTargets();
-    return Limelight.toPose2D(targets[0].targetPoseCameraSpace);
+    var targets = getTarget();
+    return Limelight.toPose2D(targets.targetPoseCameraSpace);
   }
   public Pose2d getTargetPoseRobotSpace() {
-    var targets = getTargets();
-    return Limelight.toPose2D(targets[0].targetPoseRobotSpace);
+    var targets = getTarget();
+    return Limelight.toPose2D(targets.targetPoseRobotSpace);
   }
   public Pose2d getCameraPoseTargetSpace() {
-    var targets = getTargets();
-    return Limelight.toPose2D(targets[0].cameraPoseTargetSpace);
+    var targets = getTarget();
+    return Limelight.toPose2D(targets.cameraPoseTargetSpace);
   }
   public IMUData getIMUData() {
     return getResults().imu;
@@ -47,6 +50,13 @@ public class LimelightSubsystem extends SubsystemBase {
 
   public boolean isTargetAvailable() {
     return limelight.getTargetCount() > 0;
+  }
+  public double getTXDegrees() {
+    return getTarget().txDegrees;
+  }
+
+  public double getIMUYaw() {
+    return getIMUData().yaw;
   }
 
   @Override

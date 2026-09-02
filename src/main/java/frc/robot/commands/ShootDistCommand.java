@@ -15,9 +15,9 @@ import org.wpilib.smartdashboard.Field2d;
 import org.wpilib.smartdashboard.SmartDashboard;
 import org.wpilib.command2.Command;
 import frc.robot.Constants;
-import frc.robot.LimelightHelpersCameronEdition;
 import frc.robot.RobotContainer;
 import frc.robot.subsystems.HoodSubsystem;
+import frc.robot.subsystems.LimelightSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.TurretSubsystem;
@@ -28,7 +28,7 @@ public class ShootDistCommand extends Command {
   private TurretSubsystem t_TurretSubsystem ;
   private HoodSubsystem h_HoodSubsystem;
   private ShooterSubsystem s_ShooterSubsystem;
-  
+  private LimelightSubsystem limelightSubsystem;
 
   private double g = Constants.PhysicsConstants.gravity;
   private double h = Constants.PhysicsConstants.HubHeight;
@@ -44,10 +44,11 @@ public class ShootDistCommand extends Command {
 
   
   /** Creates a new AutoAimCommand. */
-  public ShootDistCommand(double dist, TurretSubsystem t_TurretSubsystem, HoodSubsystem h_HoodSubsystem, ShooterSubsystem s_ShooterSubsystem) {
+  public ShootDistCommand(double dist, TurretSubsystem t_TurretSubsystem, HoodSubsystem h_HoodSubsystem, ShooterSubsystem s_ShooterSubsystem, LimelightSubsystem limelightSubsystem) {
     this.t_TurretSubsystem = t_TurretSubsystem;
     this.s_ShooterSubsystem = s_ShooterSubsystem;
     this.h_HoodSubsystem = h_HoodSubsystem;
+    this.limelightSubsystem = limelightSubsystem;
     addRequirements(t_TurretSubsystem, h_HoodSubsystem, s_ShooterSubsystem);
     this.dist = dist;
    
@@ -219,6 +220,6 @@ public class ShootDistCommand extends Command {
   }
 
   public double getIMUYaw(){
-    return LimelightHelpersCameronEdition.getIMUData("limelight").gyroY;
+    return limelightSubsystem.getIMUYaw();
   }
 }
