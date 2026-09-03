@@ -4,13 +4,19 @@
 
 package frc.robot.subsystems;
 
+import java.util.Optional;
+
 import org.wpilib.command2.SubsystemBase;
+import org.wpilib.driverstation.Alliance;
 import org.wpilib.math.geometry.Pose2d;
 
 import com.limelightvision.Limelight;
 import com.limelightvision.Limelight.FiducialTarget;
 import com.limelightvision.Limelight.IMUData;
 import com.limelightvision.Limelight.LimelightResults;
+import com.limelightvision.Limelight.PoseEstimate;
+import com.limelightvision.Limelight.PoseEstimateType;
+import org.wpilib.driverstation.internal.DriverStationBackend;
 
 import frc.robot.Constants;
 
@@ -57,6 +63,22 @@ public class LimelightSubsystem extends SubsystemBase {
 
   public double getIMUYaw() {
     return getIMUData().yaw;
+  }
+
+  public PoseEstimate getPoseEstimateMt1() {
+    Alliance alliance = DriverStationBackend.getAlliance().get();
+    PoseEstimateType poseEstimateType = (alliance == Alliance.RED) ? PoseEstimateType.MT1_WPIRED : PoseEstimateType.MT1_WPIBLUE;
+    return limelight.getPoseEstimate(poseEstimateType);
+  }
+
+  public PoseEstimate getPoseEstimateMt2() {
+    Alliance alliance = DriverStationBackend.getAlliance().get();
+    PoseEstimateType poseEstimateType = (alliance == Alliance.RED) ? PoseEstimateType.MT2_WPIRED : PoseEstimateType.MT2_WPIBLUE;
+    return limelight.getPoseEstimate(poseEstimateType);
+  }
+
+  public void SetRobotOrientation(double YawDegrees) {
+    limelight.setRobotOrientation(YawDegrees);
   }
 
   @Override

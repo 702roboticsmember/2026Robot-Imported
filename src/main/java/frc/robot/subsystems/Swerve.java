@@ -15,6 +15,7 @@ import java.util.Optional;
 import org.json.simple.parser.ParseException;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.limelightvision.Limelight.PoseEstimate;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
@@ -41,13 +42,15 @@ public class Swerve extends SubsystemBase {
     public static Pigeon2 gyro;
     public  RobotConfig config;
      public TurretSubsystem t_TurretSubsystem;
+    public LimelightSubsystem limelightSubsystem;
     
     public static SwerveDrivePoseEstimator swervePoseEstimator;
     
 
 
-    public Swerve(TurretSubsystem t_TurretSubsystem) {
+    public Swerve(TurretSubsystem t_TurretSubsystem, LimelightSubsystem limelightSubsystem) {
         this.t_TurretSubsystem = t_TurretSubsystem;
+        this.limelightSubsystem = limelightSubsystem;
       
         //limelightMeasurement =  LimelightHelpersCameronEdition.getBotPoseEstimate_wpiBlue(Constants.limelightConstants.limelightBack);
         gyro = new Pigeon2(Constants.Swerve.GyroId, Constants.CAN_BUS);
@@ -282,25 +285,25 @@ public class Swerve extends SubsystemBase {
     //     }
     // }
 
-public void addmt1VisionMeasurement(LimelightHelpersCameronEdition.PoseEstimate mt1){
+public void addmt1VisionMeasurement(PoseEstimate mt1){
         boolean doRejectUpdate = false;
         if (mt1 != null){
-         if(mt1.tagCount == 1 && mt1.rawFiducials.length == 1)
+         if(mt1.reportedTagCount == 1 && mt1.rawFiducials.length == 1)
       {
         if(mt1.rawFiducials[0].ambiguity > .7)
         {
           doRejectUpdate = true;
         }
-        if(mt1.rawFiducials[0].distToCamera > 1.5)
+        if(mt1.rawFiducials[0].getDistanceToCamera() > 1.5)
         {
           doRejectUpdate = true;
         }
       }
-      if(mt1.tagCount == 0)
+      if(mt1.reportedTagCount == 0)
       {
         doRejectUpdate = true;
       }
-      if(mt1.avgTagDist > 5.8)
+      if(mt1.avgTagDistanceMeters > 5.8)
       {
         doRejectUpdate = true;
       }
@@ -318,13 +321,12 @@ public void addmt1VisionMeasurement(LimelightHelpersCameronEdition.PoseEstimate 
             mt1.pose,
             mt1.timestampSeconds);
             SmartDashboard.putBoolean("ran", true);
-            SmartDashboard.putNumberArray("std", mt1.std);
-             SmartDashboard.putNumber("dist",  mt1.avgTagDist);
+             SmartDashboard.putNumber("dist",  mt1.avgTagDistanceMeters);
       }
         }
     }
 
-    public void addmt2VisionMeasurement(LimelightHelpersCameronEdition.PoseEstimate mt2){
+    public void addmt2VisionMeasurement(PoseEstimate mt2){
       boolean doRejectUpdate = false; 
  
    
@@ -333,7 +335,7 @@ public void addmt1VisionMeasurement(LimelightHelpersCameronEdition.PoseEstimate 
 //   {
 //     doRejectUpdate = true;
 //   }
-  if(mt2.tagCount == 0)
+  if(mt2.reportedTagCount == 0)
   {
     doRejectUpdate = true;
   }
@@ -351,12 +353,13 @@ public void addmt1VisionMeasurement(LimelightHelpersCameronEdition.PoseEstimate 
 
     @Override
     public void periodic() {
-         LimelightHelpersCameronEdition.SetRobotOrientation(Constants.limelightConstants.limelightTurret, this.RobotPoseAdjustedTolimelightTurret(swervePoseEstimator.getEstimatedPosition()).getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        //  LimelightHelpersCameronEdition.SetRobotOrientation(Constants.limelightConstants.limelightTurret, this.RobotPoseAdjustedTolimelightTurret(swervePoseEstimator.getEstimatedPosition()).getRotation().getDegrees(), 0, 0, 0, 0, 0);
+        limelightSubsystem.SetRobotOrientation(this.RobotPoseAdjustedTolimelightTurret(swervePoseEstimator.getEstimatedPosition()).getRotation().getDegrees());
         if(Double.isNaN(swervePoseEstimator.getEstimatedPosition().getX())){
             swervePoseEstimator = new SwerveDrivePoseEstimator(Constants.Swerve.KINEMATICS, getGyroYaw(), getModulePositions(), new Pose2d());
         }
-        limelightMeasurement =  LimelightHelpersCameronEdition.getBotPoseEstimate_wpiBlue(Constants.limelightConstants.limelightBack);
-        limelightMeasurementTurret =  LimelightHelpersCameronEdition.getBotPoseEstimate_wpiBlue(Constants.limelightConstants.limelightTurret);
+        // limelightMeasurement =  LimelightHelpersCameronEdition.getBotPoseEstimate_wpiBlue(Constants.limelightConstants.limelightBack);
+        // limelightMeasurementTurret =  LimelightHelpersCameronEdition.getBotPoseEstimate_wpiBlue(Constants.limelightConstants.limelightTurret);
         //if(gyro.isConnected())swervePoseEstimator.updateWithTime(Timer.getFPGATimestamp(), getGyroYaw(), getModulePositions());
         swervePoseEstimator.updateWithTime(Timer.getMonotonicTimestamp(), getGyroYaw(), getModulePositions());
        

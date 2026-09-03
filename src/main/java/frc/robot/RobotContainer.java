@@ -48,7 +48,7 @@ import frc.robot.subsystems.IndexerSubsystem;
 import frc.robot.subsystems.IntakeArmSubsytem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.LEDSubsystem;
-import frc.robot.subsystems.LIDARSubsystem;
+import frc.robot.subsystems.LimelightSubsystem;
 import frc.robot.subsystems.ShooterSubsystem;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.TurretSubsystem;
@@ -74,8 +74,8 @@ public class RobotContainer {
     private final FloorIndexerSubsystem f_FloorIndexerSubsystem = new FloorIndexerSubsystem();
     private final TurretSubsystem t_TurretSubsystem = new TurretSubsystem();
     private final HoodSubsystem h_HoodSubsystem = new HoodSubsystem();
+    private final LimelightSubsystem limelightSubsystem = new LimelightSubsystem();
    // private final LEDSubsystem l_LEDSubsystem = new LEDSubsystem();
-    private final LIDARSubsystem l_lidarSubsystem = new LIDARSubsystem();
     private final Gamepad driver = new Gamepad(0);
 
 
@@ -367,7 +367,7 @@ public class RobotContainer {
 
 
     /* Subsystems */
-    private final Swerve s_Swerve = new Swerve(t_TurretSubsystem);
+    private final Swerve s_Swerve = new Swerve(t_TurretSubsystem, limelightSubsystem);
 
     public RobotContainer() {
        
