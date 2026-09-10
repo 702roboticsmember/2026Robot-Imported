@@ -204,39 +204,35 @@ public class RobotContainer {
              }, i_IndexerSubsystem, f_FloorIndexerSubsystem).withDeadline(new WaitCommand(0.1)),
              new WaitCommand(0.1),
             new ParallelCommandGroup(
+                //TODO figure out what tf this does
             //Commands.run(()->i_IntakeSubsystem.setIntakeSpeed(0.5), i_IntakeSubsystem),
-            Commands.run(()->{
-                double jamTime = jamtime;
-                double Reset = reset;
-                if (l_lidarSubsystem.jam()) {
-                    Reset = Timer.getMonotonicTimestamp();
-                }
-                
-                if (Math.abs(CurrentAngle - TurretGoal) < Constants.TurretConstants.allowedShootingTolerance) {
-                        i_IndexerSubsystem.setVelocity(140);
-                    }
-                    else {
-                        i_IndexerSubsystem.setVelocity(0);
-                    }
-                if(i_IndexerSubsystem.getVelocity() < 5 || (f_FloorIndexerSubsystem.getVelocity() < 5 && f_FloorIndexerSubsystem.getVelocity() > 0) ){
+            // Commands.run(()->{
+            //     if (Math.abs(CurrentAngle - TurretGoal) < Constants.TurretConstants.allowedShootingTolerance) {
+            //             i_IndexerSubsystem.setVelocity(140);
+            //         }
+            //         else {
+            //             i_IndexerSubsystem.setVelocity(0);
+            //         }
+            //     if(i_IndexerSubsystem.getVelocity() < 5 || (f_FloorIndexerSubsystem.getVelocity() < 5 && f_FloorIndexerSubsystem.getVelocity() > 0) ){
                     
-                }else{
-                    jamTime = Timer.getMonotonicTimestamp();
-                }
-                    if(Timer.getMonotonicTimestamp() - jamTime < 1 && !l_lidarSubsystem.jam() && Timer.getMonotonicTimestamp() - reset > 0.5){
-                    if (Math.abs(CurrentAngle - TurretGoal) < Constants.TurretConstants.allowedShootingTolerance) {
-                        f_FloorIndexerSubsystem.setVelocity(60);
-                    } else {
-                        f_FloorIndexerSubsystem.setFloorIndexSpeed(20);
-                    }
-                }else{
-                    SmartDashboard.putBoolean("fixed", true);
-                    f_FloorIndexerSubsystem.setVelocity(-40);
+            //     }else{
+            //         jamTime = Timer.getMonotonicTimestamp();
+            //     }
+            //         if(Timer.getMonotonicTimestamp() - jamTime < 1 && !l_lidarSubsystem.jam() && Timer.getMonotonicTimestamp() - reset > 0.5){
+            //         if (Math.abs(CurrentAngle - TurretGoal) < Constants.TurretConstants.allowedShootingTolerance) {
+            //             f_FloorIndexerSubsystem.setVelocity(60);
+            //         } else {
+            //             f_FloorIndexerSubsystem.setFloorIndexSpeed(20);
+            //         }
+            //     }else{
+            //         SmartDashboard.putBoolean("fixed", true);
+            //         f_FloorIndexerSubsystem.setVelocity(-40);
         
-                }
+            //     }
                 
 
-            }, f_FloorIndexerSubsystem, i_IndexerSubsystem),
+            // },
+            // f_FloorIndexerSubsystem, i_IndexerSubsystem),
                 new InstantCommand(() -> max = 0.13)
                 ));
     }
@@ -272,13 +268,13 @@ public class RobotContainer {
         
     }
 
-    private Command ShootDeadline(){
-        return Commands.waitUntil(()-> !l_lidarSubsystem.indexer_full());
-    }
+    // private Command ShootDeadline(){
+    //     return Commands.waitUntil(()-> !l_lidarSubsystem.indexer_full());
+    // }
 
-    private Command ShootDeadlineTime(){
-        return new SequentialCommandGroup(new WaitCommand(1), ShootDeadline());
-    }
+    // private Command ShootDeadlineTime(){
+    //     return new SequentialCommandGroup(new WaitCommand(1), ShootDeadline());
+    // }
     
 
     private Command AutoAim() {
@@ -306,14 +302,14 @@ public class RobotContainer {
 
     private Command AimAtHubBlue(){
         
-            return new AutoAimCommand(Constants.Locations.BLUEHUB.location, t_TurretSubsystem, h_HoodSubsystem, s_ShooterSubsystem, ()-> getAlliance());
+            return new AutoAimCommand(Constants.Locations.BLUEHUB.location, t_TurretSubsystem, h_HoodSubsystem, s_ShooterSubsystem, ()-> getAlliance(), limelightSubsystem);
         
             //return new AutoAimCommand(true, t_TurretSubsystem, h_HoodSubsystem, s_ShooterSubsystem);
     }
 
     private Command AimAtHubRed(){
             
-            return new AutoAimCommand(Constants.Locations.REDHUB.location, t_TurretSubsystem, h_HoodSubsystem, s_ShooterSubsystem, ()-> getAlliance());
+            return new AutoAimCommand(Constants.Locations.REDHUB.location, t_TurretSubsystem, h_HoodSubsystem, s_ShooterSubsystem, ()-> getAlliance(), limelightSubsystem);
         
             //return new AutoAimCommand(true, t_TurretSubsystem, h_HoodSubsystem, s_ShooterSubsystem);
     }
@@ -356,13 +352,22 @@ public class RobotContainer {
 
 
     public Command AutoIntake(){
-        return new ParallelCommandGroup(new AutoIntakeCommand(
-            ()->LimelightHelpersCameronEdition.getTX(Constants.limelightConstants.limelightFront),
-            ()->LimelightHelpersCameronEdition.getTA(Constants.limelightConstants.limelightFront), 
-            ()-> LimelightHelpersCameronEdition.getTV(Constants.limelightConstants.limelightFront), 
-            s_Swerve, 
-            0.3, 
-            i_IntakeSubsystem));
+
+        // return new ParallelCommandGroup(new AutoIntakeCommand(
+        //     ()->LimelightHelpersCameronEdition.getTX(Constants.limelightConstants.limelightFront),
+        //     ()->LimelightHelpersCameronEdition.getTA(Constants.limelightConstants.limelightFront), 
+        //     ()-> LimelightHelpersCameronEdition.getTV(Constants.limelightConstants.limelightFront), 
+        //     s_Swerve, 
+        //     0.3, 
+        //     i_IntakeSubsystem));
+        return new ParallelCommandGroup(
+            new AutoIntakeCommand(
+                () -> limelightSubsystem.getTargetPoseCameraSpace().getX(),
+                () -> limelightSubsystem.getTA(),
+                () -> limelightSubsystem.isTargetAvailable(),
+                s_Swerve,
+                0.3,
+                i_IntakeSubsystem));
     }
 
 
@@ -399,12 +404,12 @@ public class RobotContainer {
         // , l_LEDSubsystem));
         
         
-        //TODO reenable
-        // s_Swerve.setDefaultCommand(new TeleopSwerve(s_Swerve, 
-        // ()-> MathUtil.clamp(-driver.getRawAxis(1) * power, -max, max) , 
-        // ()-> MathUtil.clamp(-driver.getRawAxis(0) * power, -max, max),
-        // ()-> -driver.getRawAxis(4) * power, 
-        // ()->false, ()-> getAlliance()));
+        s_Swerve.setDefaultCommand(new TeleopSwerve(s_Swerve, 
+        ()-> Math.clamp(-driver.getRawAxis(1) * power, -max, max) , 
+        ()-> Math.clamp(-driver.getRawAxis(0) * power, -max, max),
+        ()-> -driver.getRawAxis(4) * power, 
+        ()->false, ()-> getAlliance()));
+        // s_Swerve.setDefaultCommand(new TeleopSwerve(s_Swerve, null, null, null, UP, ClimbTrigger));
 
         // s_ShooterSubsystem.setDefaultCommand(new InstantCommand(()-> s_ShooterSubsystem.setSpeed(codriver.getLeftTriggerAxis()* 0.4) , s_ShooterSubsystem));
 
@@ -426,7 +431,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("ClimbDeadline", ClimbDeadline());
         NamedCommands.registerCommand("ClimbGrab", new InstantCommand());
         NamedCommands.registerCommand("ClimbRetract", RetractClimb());
-        NamedCommands.registerCommand("ShootDeadline", ShootDeadlineTime());
+        // NamedCommands.registerCommand("ShootDeadline", ShootDeadlineTime());
         //ClimbGrab
         NamedCommands.registerCommand("ArmOut", ArmOut());
         NamedCommands.registerCommand("ArmPartial", ArmPartial());

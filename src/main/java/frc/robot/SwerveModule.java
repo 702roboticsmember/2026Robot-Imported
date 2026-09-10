@@ -40,22 +40,22 @@ public class SwerveModule {
         this.angleOffset = moduleConstants.angleOffset;
 
         /* Angle Encoder Config */
-        angleEncoder = new CANcoder(moduleConstants.cancoderID);
+        CANcoder angleEncoder = new CANcoder(moduleConstants.cancoderID, Constants.CAN_BUS);
         angleEncoder.getConfigurator().apply(Robot.CTRE_CONFIGS.swerveCANcoderConfig);
 
         /* Angle Motor Config */
-        angleMotor = new TalonFX(moduleConstants.angleMotorID);
+        angleMotor = new TalonFX(moduleConstants.angleMotorID, Constants.CAN_BUS);
         angleMotor.getConfigurator().apply(Robot.CTRE_CONFIGS.swerveAngleFXConfig);
         resetToAbsolute();
 
         /* Drive Motor Config */
-        driveMotor = new TalonFX(moduleConstants.driveMotorID);
+        driveMotor = new TalonFX(moduleConstants.driveMotorID, Constants.CAN_BUS);
         driveMotor.getConfigurator().apply(Robot.CTRE_CONFIGS.swerveDriveFXConfig);
         driveMotor.getConfigurator().setPosition(0.0);
     }
 
     public void setDesiredState(SwerveModuleVelocity desiredState, boolean isOpenLoop) {
-        desiredState.optimize(getState().angle);
+        desiredState = desiredState.optimize(getState().angle);
         this.setAngleSpeed(desiredState.angle.getRotations());
         this.setSpeed(desiredState, isOpenLoop);
     }
@@ -69,7 +69,7 @@ public class SwerveModule {
 
     private void setSpeed(SwerveModuleVelocity desiredState, boolean isOpenLoop) {
         if (isOpenLoop) {
-            double toOutput = desiredState.speedMetersPerSecond / Constants.Swerve.MAX_SPEED;
+            double toOutput = desiredState.velocity / Constants.Swerve.MAX_SPEED;
 
             // toOutput = openLoopLimiter.calculate(toOutput);
 
@@ -77,13 +77,13 @@ public class SwerveModule {
 
             driveMotor.setControl(driveDutyCycle);
         } else {
-            double toOutputVelocity = Conversions.MPSToRPS(desiredState.speedMetersPerSecond,
+            double toOutputVelocity = Conversions.MPSToRPS(desiredState.velocity,
                     Constants.Swerve.WHEEL_CIRCUMFERENCE);
 
             //toOutputVelocity = closedLoopLimiter.calculate(toOutputVelocity);
 
             driveVelocity.Velocity = toOutputVelocity;
-            driveVelocity.FeedForward = driveFeedForward.calculate(desiredState.speedMetersPerSecond);
+            driveVelocity.FeedForward = driveFeedForward.calculate(desiredState.velocity);
 
             driveMotor.setControl(driveVelocity);
         }

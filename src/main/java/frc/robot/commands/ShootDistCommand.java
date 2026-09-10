@@ -25,7 +25,7 @@ import frc.robot.subsystems.TurretSubsystem;
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
 public class ShootDistCommand extends Command {
  
-  private TurretSubsystem t_TurretSubsystem ;
+  // private TurretSubsystem t_TurretSubsystem ;
   private HoodSubsystem h_HoodSubsystem;
   private ShooterSubsystem s_ShooterSubsystem;
   private LimelightSubsystem limelightSubsystem;
@@ -45,7 +45,7 @@ public class ShootDistCommand extends Command {
   
   /** Creates a new AutoAimCommand. */
   public ShootDistCommand(double dist, TurretSubsystem t_TurretSubsystem, HoodSubsystem h_HoodSubsystem, ShooterSubsystem s_ShooterSubsystem, LimelightSubsystem limelightSubsystem) {
-    this.t_TurretSubsystem = t_TurretSubsystem;
+    // this.t_TurretSubsystem = t_TurretSubsystem;
     this.s_ShooterSubsystem = s_ShooterSubsystem;
     this.h_HoodSubsystem = h_HoodSubsystem;
     this.limelightSubsystem = limelightSubsystem;

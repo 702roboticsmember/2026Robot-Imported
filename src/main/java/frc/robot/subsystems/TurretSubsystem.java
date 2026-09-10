@@ -17,14 +17,14 @@ import org.wpilib.command2.Command;
 import org.wpilib.command2.SubsystemBase;
 import frc.lib.math.Conversions;
 import frc.robot.Constants;
-import frc.robot.LimelightHelpersCameronEdition;
+// import frc.robot.LimelightHelpersCameronEdition;
 import frc.robot.Robot;
 import frc.robot.RobotContainer;
 
 import java.util.function.DoubleSupplier;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+// import com.ctre.phoenix.motorcontrol.ControlMode;
+// import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicExpoVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
@@ -35,10 +35,12 @@ import com.ctre.phoenix6.signals.InvertedValue;
 
 
 public class TurretSubsystem extends SubsystemBase {
-  private TalonFX Motor = new TalonFX(Constants.TurretConstants.TurretMotorID);
+  private TalonFX Motor = new TalonFX(Constants.TurretConstants.TurretMotorID, Constants.CAN_BUS);
   private MotionMagicVoltage motionMagic = new MotionMagicVoltage(0);
+  // private LimelightSubsystem limelightSubsystem;
   /** Creates a new ClimbSubsystem. */
-   public TurretSubsystem() { 
+   public TurretSubsystem() {
+    // limelightSubsystem = limesub; 
     //m_encoderFR.setSimDevice(SimDevice.create("encoder"));
     TalonFXConfiguration turretConfig = new TalonFXConfiguration();
       turretConfig.CurrentLimits.StatorCurrentLimit = Constants.TurretConstants.CURRENT_LIMIT;
@@ -90,7 +92,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public void setSpeed(double speed) {
-    Motor.set(-speed);
+    Motor.setThrottle(-speed);
     SmartDashboard.putBoolean("hiiiiiii", true);
     
     
@@ -136,11 +138,11 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   
-  public double getLimelightYaw(){
-    double limelightMeasurement = LimelightHelpersCameronEdition.getIMUData("limelight").robotYaw;
+  // public double getLimelightYaw(){
+  //   double limelightMeasurement = limeli;
     
-    return limelightMeasurement;
-  }
+  //   return limelightMeasurement;
+  // }
 
   public void goToAngle(double angle){
     if(angle > Constants.TurretConstants.forwardLimit)angle = Constants.TurretConstants.forwardLimit;

@@ -19,7 +19,6 @@ public class LEDSubsystem extends SubsystemBase {
   private AddressableLED led1 = new AddressableLED(Constants.LEDConstants.LEDPort);
   private AddressableLEDBuffer buffer1 = new AddressableLEDBuffer(Constants.LEDConstants.BufferLength);
   private int m_rainbowFirstPixelHue = 0;
-  private boolean do_the_rainbow = true;
   private int m_bagelbow_first_index = 0;
 
   public LEDSubsystem() {
@@ -29,14 +28,12 @@ public class LEDSubsystem extends SubsystemBase {
   }
   
    public void setColor(Color color) {
-    do_the_rainbow = false;
     for(int i = 0; i < buffer1.getLength(); ++i) {
         buffer1.setLED(i, color);
     }
     led1.setData(buffer1);}
 
     public void DoTheRainbow(boolean val) {
-    do_the_rainbow = val;
     
    }
 

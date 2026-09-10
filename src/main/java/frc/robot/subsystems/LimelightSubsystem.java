@@ -17,6 +17,7 @@ import com.limelightvision.Limelight.LimelightResults;
 import com.limelightvision.Limelight.PoseEstimate;
 import com.limelightvision.Limelight.PoseEstimateType;
 import org.wpilib.driverstation.internal.DriverStationBackend;
+import org.wpilib.driverstation.MatchState;
 
 import frc.robot.Constants;
 
@@ -61,21 +62,26 @@ public class LimelightSubsystem extends SubsystemBase {
     return getTarget().txDegrees;
   }
 
+  public double getTA() {
+    return limelight.getTargetAreaPercent();
+  }
+
   public double getIMUYaw() {
     return getIMUData().yaw;
   }
 
   public PoseEstimate getPoseEstimateMt1() {
-    Alliance alliance = DriverStationBackend.getAlliance().get();
+    Alliance alliance = MatchState.getAlliance().get();
     PoseEstimateType poseEstimateType = (alliance == Alliance.RED) ? PoseEstimateType.MT1_WPIRED : PoseEstimateType.MT1_WPIBLUE;
     return limelight.getPoseEstimate(poseEstimateType);
   }
 
   public PoseEstimate getPoseEstimateMt2() {
-    Alliance alliance = DriverStationBackend.getAlliance().get();
+    Alliance alliance = MatchState.getAlliance().get();
     PoseEstimateType poseEstimateType = (alliance == Alliance.RED) ? PoseEstimateType.MT2_WPIRED : PoseEstimateType.MT2_WPIBLUE;
     return limelight.getPoseEstimate(poseEstimateType);
   }
+
 
   public void SetRobotOrientation(double YawDegrees) {
     limelight.setRobotOrientation(YawDegrees);
