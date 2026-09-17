@@ -49,7 +49,7 @@ public class Robot extends TimedRobot {
    */
   public Robot() {
     // Instantiate our RobotContainer. This will perform all our button bindings,
-    SmartDashboard.putData("turret field", turretField);
+    // SmartDashboard.putData("turret field", turretField);
 
     // and put our
     // autonomous chooser on the dashboard.
@@ -74,7 +74,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
-    turretField.setRobotPose(AutoAimCommand.RobotPoseAdjustedTolimelightTurret(Swerve.swervePoseEstimator.getEstimatedPosition()));
+    // turretField.setRobotPose(AutoAimCommand.RobotPoseAdjustedTolimelightTurret(Swerve.swervePoseEstimator.getEstimatedPosition()));
    
     // Runs the Scheduler. This is responsible for polling buttons, adding
     // newly-scheduled

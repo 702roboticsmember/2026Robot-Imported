@@ -110,7 +110,7 @@ public class RobotContainer {
     public static double CurrentAngle = 0;
     public BooleanSupplier hoodUp = ()-> true;
     public static boolean robotCentric = false;
-    private final SendableChooser<Command> autoChooser;
+    // private final SendableChooser<Command> autoChooser;
     private final SendableChooser<Command> teamChooser;
 
     public static Locations currentPOI = Locations.BLUEHUB;
@@ -351,28 +351,28 @@ public class RobotContainer {
     }
 
 
-    public Command AutoIntake(){
+    // public Command AutoIntake(){
 
-        // return new ParallelCommandGroup(new AutoIntakeCommand(
-        //     ()->LimelightHelpersCameronEdition.getTX(Constants.limelightConstants.limelightFront),
-        //     ()->LimelightHelpersCameronEdition.getTA(Constants.limelightConstants.limelightFront), 
-        //     ()-> LimelightHelpersCameronEdition.getTV(Constants.limelightConstants.limelightFront), 
-        //     s_Swerve, 
-        //     0.3, 
-        //     i_IntakeSubsystem));
-        return new ParallelCommandGroup(
-            new AutoIntakeCommand(
-                () -> limelightSubsystem.getTargetPoseCameraSpace().getX(),
-                () -> limelightSubsystem.getTA(),
-                () -> limelightSubsystem.isTargetAvailable(),
-                s_Swerve,
-                0.3,
-                i_IntakeSubsystem));
-    }
+    //     // return new ParallelCommandGroup(new AutoIntakeCommand(
+    //     //     ()->LimelightHelpersCameronEdition.getTX(Constants.limelightConstants.limelightFront),
+    //     //     ()->LimelightHelpersCameronEdition.getTA(Constants.limelightConstants.limelightFront), 
+    //     //     ()-> LimelightHelpersCameronEdition.getTV(Constants.limelightConstants.limelightFront), 
+    //     //     s_Swerve, 
+    //     //     0.3, 
+    //     //     i_IntakeSubsystem));
+    //     return new ParallelCommandGroup(
+    //         new AutoIntakeCommand(
+    //             () -> limelightSubsystem.getTargetPoseCameraSpace().getX(),
+    //             () -> limelightSubsystem.getTA(),
+    //             () -> limelightSubsystem.isTargetAvailable(),
+    //             s_Swerve,
+    //             0.3,
+    //             i_IntakeSubsystem));
+    // }
 
 
     /* Subsystems */
-    private final Swerve s_Swerve = new Swerve(t_TurretSubsystem, limelightSubsystem);
+    // private final Swerve s_Swerve = new Swerve(t_TurretSubsystem, limelightSubsystem);
 
     public RobotContainer() {
        
@@ -403,12 +403,13 @@ public class RobotContainer {
         // }
         // , l_LEDSubsystem));
         
-        
-        s_Swerve.setDefaultCommand(new TeleopSwerve(s_Swerve, 
-        ()-> Math.clamp(-driver.getRawAxis(1) * power, -max, max) , 
-        ()-> Math.clamp(-driver.getRawAxis(0) * power, -max, max),
-        ()-> -driver.getRawAxis(4) * power, 
-        ()->false, ()-> getAlliance()));
+        // TODO swerve
+        // s_Swerve.setDefaultCommand(new TeleopSwerve(s_Swerve, 
+        // ()-> Math.clamp(-driver.getRawAxis(1) * power, -max, max) , 
+        // ()-> Math.clamp(-driver.getRawAxis(0) * power, -max, max),
+        // ()-> -driver.getRawAxis(4) * power, 
+        // ()->false, ()-> getAlliance()));
+
         // s_Swerve.setDefaultCommand(new TeleopSwerve(s_Swerve, null, null, null, UP, ClimbTrigger));
 
         // s_ShooterSubsystem.setDefaultCommand(new InstantCommand(()-> s_ShooterSubsystem.setSpeed(codriver.getLeftTriggerAxis()* 0.4) , s_ShooterSubsystem));
@@ -426,7 +427,7 @@ public class RobotContainer {
         NamedCommands.registerCommand("IntakeNormal", IntakeIn());
         NamedCommands.registerCommand("StopIntake", IntakeStop());
         NamedCommands.registerCommand("IntakeOut", IntakeOut());
-        NamedCommands.registerCommand("AutoIntake", AutoIntake());
+        // NamedCommands.registerCommand("AutoIntake", AutoIntake());
         NamedCommands.registerCommand("Climb", ClimbAuto());
         NamedCommands.registerCommand("ClimbDeadline", ClimbDeadline());
         NamedCommands.registerCommand("ClimbGrab", new InstantCommand());
@@ -441,12 +442,12 @@ public class RobotContainer {
 
         
         configureButtonBindings();
-
+        //TODO ADD AUTO
         // Build an auto chooser. This will use Commands.none() as the default option.
-        autoChooser = AutoBuilder.buildAutoChooser();
+        // autoChooser = AutoBuilder.buildAutoChooser();
         teamChooser = new SendableChooser<>();
         
-        SmartDashboard.putData("Auto Chooser", autoChooser);
+        // SmartDashboard.putData("Auto Chooser", autoChooser);
         SmartDashboard.putData("Team Chooser", teamChooser);
         SmartDashboard.putNumber("Input Distance", 0);
     }
@@ -524,10 +525,10 @@ public class RobotContainer {
     
      public Command getAutonomousCommand() {
 
-        return new ParallelCommandGroup(
-            //new InstantCommand(()->Swerve.gyro.reset()),
-            autoChooser.getSelected()).andThen(new ParallelCommandGroup(ShootOff(), ArmOut(), IntakeOff()).withDeadline(new WaitCommand(1)));
-            
+        // return new ParallelCommandGroup(
+        //     //new InstantCommand(()->Swerve.gyro.reset()),
+        //     autoChooser.getSelected()).andThen(new ParallelCommandGroup(ShootOff(), ArmOut(), IntakeOff()).withDeadline(new WaitCommand(1)));
+           return Commands.none(); 
           }
     }
      
